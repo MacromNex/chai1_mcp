@@ -1,0 +1,35 @@
+{
+  "_description": "Default configuration for all Chai-1 prediction scripts",
+  "_version": "1.0.0",
+
+  "model": {
+    "num_trunk_recycles": 3,
+    "num_diffn_timesteps": 200,
+    "seed": 42,
+    "use_esm_embeddings": true
+  },
+
+  "computation": {
+    "device": "cuda:0",
+    "fallback_device": "cpu"
+  },
+
+  "output": {
+    "format": "cif",
+    "include_scores": true,
+    "include_metadata": true,
+    "clean_output_dir": true
+  },
+
+  "validation": {
+    "validate_fasta": true,
+    "min_sequence_length": 1,
+    "max_sequence_length": 10000
+  },
+
+  "paths": {
+    "models_dir": "models/",
+    "cache_dir": ".chai_cache/",
+    "temp_dir": "/tmp/chai_predictions/"
+  }
+}

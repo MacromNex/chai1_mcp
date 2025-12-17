@@ -1,0 +1,46 @@
+{
+  "_description": "Configuration for batch structure prediction",
+  "_source": "Extracted from examples/use_case_3_batch_prediction.py",
+
+  "model": {
+    "num_trunk_recycles": 3,
+    "num_diffn_timesteps": 200,
+    "seed": 42,
+    "use_esm_embeddings": true
+  },
+
+  "computation": {
+    "device": "cuda:0",
+    "fallback_device": "cpu",
+    "parallel": false,
+    "max_workers": 2
+  },
+
+  "batch": {
+    "file_pattern": "*.fasta",
+    "continue_on_error": true,
+    "generate_summary": true,
+    "individual_subdirs": true
+  },
+
+  "msa": {
+    "use_msa_server": false,
+    "use_templates_server": false,
+    "msa_server_url": null
+  },
+
+  "output": {
+    "format": "cif",
+    "include_scores": true,
+    "include_metadata": true,
+    "include_summary": true,
+    "clean_output_dir": false
+  },
+
+  "validation": {
+    "validate_fasta": true,
+    "min_sequence_length": 1,
+    "max_sequence_length": 10000,
+    "max_batch_size": 100
+  }
+}

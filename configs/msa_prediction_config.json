@@ -1,0 +1,39 @@
+{
+  "_description": "Configuration for MSA-enhanced structure prediction",
+  "_source": "Extracted from examples/use_case_2_prediction_with_msas.py",
+
+  "model": {
+    "num_trunk_recycles": 3,
+    "num_diffn_timesteps": 200,
+    "seed": 42,
+    "use_esm_embeddings": true
+  },
+
+  "computation": {
+    "device": "cuda:0",
+    "fallback_device": "cpu"
+  },
+
+  "msa": {
+    "use_msa_server": false,
+    "use_templates_server": false,
+    "msa_server_url": null,
+    "local_msa_directory": null,
+    "msa_file_extension": ".aligned.pqt"
+  },
+
+  "output": {
+    "format": "cif",
+    "include_scores": true,
+    "include_metadata": true,
+    "include_msa_plots": true,
+    "clean_output_dir": true
+  },
+
+  "validation": {
+    "validate_fasta": true,
+    "validate_msa_files": true,
+    "min_sequence_length": 1,
+    "max_sequence_length": 10000
+  }
+}
