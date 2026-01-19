@@ -47,6 +47,17 @@ This MCP server provides protein structure prediction capabilities using Chai Di
 
 ## Installation
 
+### Quick Setup (Recommended)
+
+Run the automated setup script:
+
+```bash
+cd chai1_mcp
+bash quick_setup.sh
+```
+
+The script will create the conda environment, install Chai-1 and all dependencies, and display the Claude Code configuration. See `quick_setup.sh --help` for options like `--skip-env`.
+
 ### Prerequisites
 - Conda or Mamba (mamba recommended for faster installation)
 - Python 3.10+
@@ -54,8 +65,9 @@ This MCP server provides protein structure prediction capabilities using Chai Di
 - 8-16GB system RAM
 - ~10GB disk space for environment
 
-### Create Environment
-Please strictly follow the information in `reports/step3_environment.md` to obtain the procedure to setup the environment. An example workflow is shown below.
+### Manual Installation (Alternative)
+
+If you prefer manual installation or need to customize the setup, follow `reports/step3_environment.md`:
 
 ```bash
 # Navigate to the MCP directory
