@@ -17,4 +17,5 @@ templates/
 tests/
 .gemini/
 repo/
-jobs/
+/jobs/
+!src/jobs/
