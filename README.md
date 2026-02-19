@@ -12,6 +12,7 @@
 - [Available Tools](#available-tools)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
+- [Docker](#docker)
 
 ## Overview
 
@@ -29,9 +30,14 @@ This MCP server provides protein structure prediction capabilities using Chai Di
 ```
 ./
 ├── README.md               # This file
+├── Dockerfile              # Docker image definition
+├── requirements.txt        # Python dependencies
+├── quick_setup.sh          # Automated setup script
+├── .github/workflows/      # CI/CD (Docker build & push)
 ├── env/                    # Conda environment
 ├── src/
-│   └── server.py           # MCP server with 11 tools
+│   ├── server.py           # MCP server with 11 tools
+│   └── jobs/               # Job manager for async operations
 ├── scripts/
 │   ├── predict_basic_structure.py      # Basic structure prediction
 │   ├── predict_with_msas.py            # MSA-enhanced prediction
@@ -47,7 +53,44 @@ This MCP server provides protein structure prediction capabilities using Chai Di
 
 ## Installation
 
-### Quick Setup (Recommended)
+### Option 1: Docker (Recommended)
+
+The easiest way to get started. A pre-built image is published to GHCR on every push to `main`.
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/macromnex/chai1_mcp:latest
+
+# Run the MCP server
+docker run --gpus all ghcr.io/macromnex/chai1_mcp:latest
+
+# Or build locally
+docker build -t chai1_mcp .
+docker run --gpus all chai1_mcp
+```
+
+Register in Claude Code:
+```bash
+claude mcp add chai1 -- docker run --gpus all -i --rm ghcr.io/macromnex/chai1_mcp:latest
+```
+
+To mount local data directories for input/output:
+```bash
+docker run --gpus all -i --rm \
+  -v /path/to/your/fasta/files:/app/inputs \
+  -v /path/to/save/results:/app/results \
+  ghcr.io/macromnex/chai1_mcp:latest
+```
+
+Register in Claude Code with mounted volumes:
+```bash
+claude mcp add chai1 -- docker run --gpus all -i --rm \
+  -v /path/to/your/data:/app/inputs \
+  -v /path/to/save/results:/app/results \
+  ghcr.io/macromnex/chai1_mcp:latest
+```
+
+### Option 2: Quick Setup (Conda)
 
 Run the automated setup script:
 
@@ -65,7 +108,7 @@ The script will create the conda environment, install Chai-1 and all dependencie
 - 8-16GB system RAM
 - ~10GB disk space for environment
 
-### Manual Installation (Alternative)
+### Option 3: Manual Installation
 
 If you prefer manual installation or need to customize the setup, follow `reports/step3_environment.md`:
 
@@ -619,6 +662,36 @@ python scripts/predict_basic_structure.py --help
 # Run MCP server in dev mode
 fastmcp dev src/server.py
 ```
+
+---
+
+## Docker
+
+### Image Details
+
+The Docker image is based on `pytorch/pytorch:2.4.0-cuda11.8-cudnn9-runtime` and includes:
+- Python 3.11 with PyTorch 2.4.0 + CUDA 11.8
+- chai_lab 0.6.1
+- fastmcp 3.0
+- All required dependencies
+
+### Building Locally
+
+```bash
+docker build -t chai1_mcp .
+```
+
+### CI/CD
+
+A GitHub Actions workflow (`.github/workflows/docker.yml`) automatically builds and pushes the image to GHCR on:
+- Every push to `main`
+- Semantic version tags (`v*.*.*`)
+- Manual workflow dispatch
+
+Image tags:
+- `latest` — latest build from `main`
+- `sha-<commit>` — pinned to a specific commit
+- `x.y.z` — semantic version (when tagged)
 
 ---
 
