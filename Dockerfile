@@ -13,8 +13,11 @@ RUN pip install --no-cache-dir --ignore-installed fastmcp
 RUN pip install --no-cache-dir -U cryptography certifi
 
 COPY src/ ./src/
+RUN chmod -R a+r /app/src/
 COPY scripts/ ./scripts/
+RUN chmod -R a+r /app/scripts/
 COPY configs/ ./configs/
+RUN chmod -R a+r /app/configs/
 
 RUN mkdir -p jobs/active jobs/completed jobs/logs results tmp
 
