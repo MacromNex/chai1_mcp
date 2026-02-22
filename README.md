@@ -1,704 +1,147 @@
-# chai-lab MCP
+# Chai-1 MCP Server
 
-> Protein structure prediction using Chai-1 model via Model Context Protocol (MCP)
+**Protein structure prediction using the Chai-1 model via Docker**
 
-## Table of Contents
-- [Overview](#overview)
-- [Installation](#installation)
-- [Local Usage (Scripts)](#local-usage-scripts)
-- [MCP Server Installation](#mcp-server-installation)
-- [Using with Claude Code](#using-with-claude-code)
-- [Using with Gemini CLI](#using-with-gemini-cli)
-- [Available Tools](#available-tools)
-- [Examples](#examples)
-- [Troubleshooting](#troubleshooting)
-- [Docker](#docker)
+An MCP (Model Context Protocol) server for Chai-1 structure prediction with 6 core tools:
+- Predict structures for small peptides (synchronous, instant results)
+- Submit basic structure predictions from FASTA sequences
+- Submit MSA-enhanced predictions for improved accuracy
+- Batch process multiple FASTA files
+- Monitor and retrieve job results
+- Validate FASTA files before submission
 
-## Overview
+## Quick Start with Docker
 
-This MCP server provides protein structure prediction capabilities using Chai Discovery's Chai-1 model. It supports proteins, DNA, RNA, and ligands with both quick synchronous operations and long-running background jobs.
+### Approach 1: Pull Pre-built Image from GitHub
 
-### Features
-- **Basic Structure Prediction**: Fast prediction from FASTA sequences
-- **MSA-Enhanced Prediction**: Improved accuracy using evolutionary information
-- **Batch Processing**: High-throughput analysis of multiple structures
-- **Job Management**: Background processing with status tracking
-- **Validation Tools**: Pre-flight checks and sequence analysis
-- **Multi-format Support**: Proteins, DNA, RNA, and ligands (SMILES)
-
-### Directory Structure
-```
-./
-├── README.md               # This file
-├── Dockerfile              # Docker image definition
-├── requirements.txt        # Python dependencies
-├── quick_setup.sh          # Automated setup script
-├── .github/workflows/      # CI/CD (Docker build & push)
-├── env/                    # Conda environment
-├── src/
-│   ├── server.py           # MCP server with 11 tools
-│   └── jobs/               # Job manager for async operations
-├── scripts/
-│   ├── predict_basic_structure.py      # Basic structure prediction
-│   ├── predict_with_msas.py            # MSA-enhanced prediction
-│   ├── predict_batch_structures.py     # Batch processing
-│   └── lib/                             # Shared utilities
-├── examples/
-│   └── data/               # Demo FASTA files and MSA data
-├── configs/                # Configuration templates
-└── repo/                   # Original chai-lab repository
-```
-
----
-
-## Installation
-
-### Option 1: Docker (Recommended)
-
-The easiest way to get started. A pre-built image is published to GHCR on every push to `main`.
+The fastest way to get started. A pre-built Docker image is automatically published to GitHub Container Registry on every release.
 
 ```bash
 # Pull the latest image
 docker pull ghcr.io/macromnex/chai1_mcp:latest
 
-# Run the MCP server
-docker run --gpus all ghcr.io/macromnex/chai1_mcp:latest
-
-# Or build locally
-docker build -t chai1_mcp .
-docker run --gpus all chai1_mcp
+# Register with Claude Code (runs as current user to avoid permission issues)
+claude mcp add chai1 -- docker run -i --rm --user `id -u`:`id -g` --gpus all --ipc=host -v `pwd`:`pwd` ghcr.io/macromnex/chai1_mcp:latest
 ```
 
-Register in Claude Code:
-```bash
-claude mcp add chai1 -- docker run --gpus all -i --rm ghcr.io/macromnex/chai1_mcp:latest
-```
+**Note:** Run from your project directory. `` `pwd` `` expands to the current working directory.
 
-To mount local data directories for input/output:
-```bash
-docker run --gpus all -i --rm \
-  -v /path/to/your/fasta/files:/app/inputs \
-  -v /path/to/save/results:/app/results \
-  ghcr.io/macromnex/chai1_mcp:latest
-```
+**Requirements:**
+- Docker with GPU support (`nvidia-docker` or Docker with NVIDIA runtime)
+- Claude Code installed
 
-Register in Claude Code with mounted volumes:
-```bash
-claude mcp add chai1 -- docker run --gpus all -i --rm \
-  -v /path/to/your/data:/app/inputs \
-  -v /path/to/save/results:/app/results \
-  ghcr.io/macromnex/chai1_mcp:latest
-```
+That's it! The Chai-1 MCP server is now available in Claude Code.
 
-### Option 2: Quick Setup (Conda)
+---
 
-Run the automated setup script:
+### Approach 2: Build Docker Image Locally
+
+Build the image yourself and install it into Claude Code. Useful for customization or offline environments.
 
 ```bash
+# Clone the repository
+git clone https://github.com/MacromNex/chai1_mcp.git
 cd chai1_mcp
-bash quick_setup.sh
+
+# Build the Docker image
+docker build -t chai1_mcp:latest .
+
+# Register with Claude Code (runs as current user to avoid permission issues)
+claude mcp add chai1 -- docker run -i --rm --user `id -u`:`id -g` --gpus all --ipc=host -v `pwd`:`pwd` chai1_mcp:latest
 ```
 
-The script will create the conda environment, install Chai-1 and all dependencies, and display the Claude Code configuration. See `quick_setup.sh --help` for options like `--skip-env`.
+**Note:** Run from your project directory. `` `pwd` `` expands to the current working directory.
 
-### Prerequisites
-- Conda or Mamba (mamba recommended for faster installation)
-- Python 3.10+
-- CUDA-capable GPU (8GB+ VRAM recommended)
-- 8-16GB system RAM
-- ~10GB disk space for environment
+**Requirements:**
+- Docker with GPU support
+- Claude Code installed
+- Git (to clone the repository)
 
-### Option 3: Manual Installation
-
-If you prefer manual installation or need to customize the setup, follow `reports/step3_environment.md`:
-
-```bash
-# Navigate to the MCP directory
-cd /home/xux/Desktop/ProteinMCP/ProteinMCP/tool-mcps/chai1_mcp
-
-# Create conda environment (use mamba if available)
-mamba create -p ./env python=3.10 -y
-# or: conda create -p ./env python=3.10 -y
-
-# Activate environment
-mamba activate ./env
-# or: conda activate ./env
-
-# Install Dependencies
-pip install loguru click pandas numpy tqdm
-pip install --force-reinstall --no-cache-dir fastmcp
-pip install chai_lab==0.6.1
-```
+**About the Docker Flags:**
+- `-i` — Interactive mode for Claude Code
+- `--rm` — Automatically remove container after exit
+- `` --user `id -u`:`id -g` `` — Runs the container as your current user, so output files are owned by you (not root)
+- `--gpus all` — Grants access to all available GPUs
+- `--ipc=host` — Uses host IPC namespace for better performance
+- `-v` — Mounts your project directory so the container can access your data
 
 ---
 
-## Local Usage (Scripts)
+## Verify Installation
 
-You can use the scripts directly without MCP for local processing.
-
-### Available Scripts
-
-| Script | Description | Example |
-|--------|-------------|---------|
-| `scripts/predict_basic_structure.py` | Basic structure prediction from FASTA | See below |
-| `scripts/predict_with_msas.py` | MSA-enhanced prediction for improved accuracy | See below |
-| `scripts/predict_batch_structures.py` | Batch processing of multiple FASTA files | See below |
-
-### Script Examples
-
-#### Basic Structure Prediction
+After adding the MCP server, you can verify it's working:
 
 ```bash
-# Activate environment
-mamba activate ./env
-
-# Run basic prediction
-python scripts/predict_basic_structure.py \
-  --input examples/data/simple_test.fasta \
-  --output results/basic \
-  --device cuda:0
-```
-
-**Parameters:**
-- `--input, -i`: FASTA file with sequences (required)
-- `--output, -o`: Output directory (default: results/)
-- `--device`: Compute device (default: cuda:0)
-- `--config`: Configuration file (optional)
-
-#### MSA-Enhanced Prediction
-
-```bash
-# With local MSA files
-python scripts/predict_with_msas.py \
-  --input examples/data/sample.fasta \
-  --msa-dir examples/data/ \
-  --output results/msa
-
-# With online MSA server (requires internet)
-python scripts/predict_with_msas.py \
-  --input examples/data/sample.fasta \
-  --use-msa-server \
-  --output results/msa_server
-```
-
-**Parameters:**
-- `--input, -i`: FASTA file with sequences (required)
-- `--output, -o`: Output directory (default: results/)
-- `--msa-dir`: Directory with .aligned.pqt MSA files
-- `--use-msa-server`: Use online MSA database
-- `--device`: Compute device (default: cuda:0)
-
-#### Batch Processing
-
-```bash
-# Sequential processing
-python scripts/predict_batch_structures.py \
-  --input-dir examples/data/batch_test \
-  --output-dir results/batch
-
-# Parallel processing (multiple GPUs)
-python scripts/predict_batch_structures.py \
-  --input-dir examples/data/batch_test \
-  --output-dir results/batch \
-  --parallel \
-  --max-workers 2
-```
-
-**Parameters:**
-- `--input-dir`: Directory containing FASTA files (required)
-- `--output-dir`: Output directory (required)
-- `--parallel`: Enable parallel processing
-- `--max-workers`: Number of parallel workers (default: 2)
-- `--file-pattern`: File pattern to match (default: *.fasta)
-
----
-
-## MCP Server Installation
-
-### Option 1: Using fastmcp (Recommended)
-
-```bash
-# Install MCP server for Claude Code
-fastmcp install src/server.py --name chai-lab
-```
-
-### Option 2: Manual Installation for Claude Code
-
-```bash
-# Add MCP server to Claude Code
-claude mcp add chai-lab -- $(pwd)/env/bin/python $(pwd)/src/server.py
-
-# Verify installation
+# List registered MCP servers
 claude mcp list
+
+# You should see 'chai1' in the output
 ```
 
-### Option 3: Configure in settings.json
-
-Add to `~/.claude/settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "chai-lab": {
-      "command": "/home/xux/Desktop/ProteinMCP/ProteinMCP/tool-mcps/chai1_mcp/env/bin/python",
-      "args": ["/home/xux/Desktop/ProteinMCP/ProteinMCP/tool-mcps/chai1_mcp/src/server.py"]
-    }
-  }
-}
-```
+In Claude Code, you can now use all 6 Chai-1 tools:
+- `predict_small_peptide`
+- `submit_basic_prediction`
+- `submit_msa_prediction`
+- `submit_batch_prediction`
+- `get_job_status`
+- `get_job_result`
 
 ---
 
-## Using with Claude Code
+## Next Steps
 
-After installing the MCP server, you can use it directly in Claude Code.
-
-### Quick Start
-
-```bash
-# Start Claude Code
-claude
-```
-
-### Example Prompts
-
-#### Tool Discovery
-```
-What tools are available from chai-lab?
-```
-
-#### Basic Usage
-```
-Use validate_fasta_file with input_file "examples/data/sample.fasta"
-```
-
-#### Structure Prediction
-```
-Use submit_basic_prediction with input_file "examples/data/simple_test.fasta" and output_dir "results/my_prediction"
-```
-
-#### Job Management
-```
-Use get_job_status with job_id "abc123"
-Use get_job_log with job_id "abc123" and tail 50
-```
-
-#### Batch Processing
-```
-Use submit_batch_prediction with input_dir "examples/data/batch_test" and parallel True
-```
-
-### Using @ References
-
-In Claude Code, use `@` to reference files and directories:
-
-| Reference | Description |
-|-----------|-------------|
-| `@examples/data/sample.fasta` | Reference a specific FASTA file |
-| `@configs/default_config.json` | Reference a config file |
-| `@results/` | Reference output directory |
+- **Detailed documentation**: See [detail.md](detail.md) for comprehensive guides on:
+  - Available MCP tools and parameters
+  - Local Python environment setup (alternative to Docker)
+  - Example workflows and use cases
+  - MSA server configuration
+  - Configuration file format
 
 ---
 
-## Using with Gemini CLI
+## Usage Examples
 
-### Configuration
+Once registered, you can use the Chai-1 tools directly in Claude Code. Here are some common workflows:
 
-Add to `~/.gemini/settings.json`:
+### Example 1: Quick Peptide Prediction
 
-```json
-{
-  "mcpServers": {
-    "chai-lab": {
-      "command": "/home/xux/Desktop/ProteinMCP/ProteinMCP/tool-mcps/chai1_mcp/env/bin/python",
-      "args": ["/home/xux/Desktop/ProteinMCP/ProteinMCP/tool-mcps/chai1_mcp/src/server.py"]
-    }
-  }
-}
+```
+I have a short peptide sequence "GAAKLKKTFR". Can you predict its structure using predict_small_peptide and save the result to /path/to/output/?
 ```
 
-### Example Prompts
+### Example 2: Full Protein Structure Prediction
 
-```bash
-# Start Gemini CLI
-gemini
-
-# Example prompts (same as Claude Code)
-> What tools are available?
-> Use validate_fasta_file with input_file "examples/data/sample.fasta"
+```
+I have a protein FASTA file at /path/to/protein.fasta. Can you submit a basic structure prediction using submit_basic_prediction with output saved to /path/to/results/, then monitor the job until it completes and retrieve the final structure?
 ```
 
----
+### Example 3: MSA-Enhanced Prediction
 
-## Available Tools
-
-### Job Management Tools
-
-| Tool | Description |
-|------|-------------|
-| `get_job_status` | Check status of submitted job |
-| `get_job_result` | Get completed job results |
-| `get_job_log` | View job execution logs |
-| `cancel_job` | Cancel running job |
-| `list_jobs` | List all submitted jobs |
-
-### Quick Operations (Sync API)
-
-These tools return results immediately (< 3 minutes):
-
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `validate_fasta_file` | Validate FASTA format and get sequence info | `input_file` |
-| `predict_small_peptide` | Sync prediction for peptides ≤20 AA | `sequence`, `max_length`, `device`, `output_file` |
-| `analyze_sequence_composition` | Analyze amino acid composition | `input_file` |
-
-### Long-Running Tasks (Submit API)
-
-These tools return a job_id for tracking (> 3 minutes):
-
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `submit_basic_prediction` | Basic structure prediction | `input_file`, `output_dir`, `device`, model params |
-| `submit_msa_prediction` | MSA-enhanced prediction | `input_file`, `output_dir`, `msa_directory`, `use_msa_server` |
-| `submit_batch_prediction` | Batch processing | `input_dir`, `output_dir`, `parallel`, `max_workers` |
-
----
-
-## Examples
-
-### Example 1: Quick Validation and Analysis
-
-**Goal:** Validate and analyze a FASTA file before prediction
-
-**Using Script:**
-```bash
-python scripts/predict_basic_structure.py --help
 ```
-
-**Using MCP (in Claude Code):**
-```
-Use validate_fasta_file with input_file "examples/data/sample.fasta"
-Use analyze_sequence_composition with input_file "examples/data/sample.fasta"
-```
-
-**Expected Output:**
-- Validation status and sequence statistics
-- Amino acid composition analysis
-- Prediction complexity assessment
-- Recommended API (sync vs submit)
-
-### Example 2: Small Peptide Prediction
-
-**Goal:** Quick prediction for a small peptide
-
-**Using Script:**
-```bash
-python scripts/predict_basic_structure.py \
-  --input examples/data/simple_test.fasta \
-  --output results/peptide/
-```
-
-**Using MCP (in Claude Code):**
-```
-Use predict_small_peptide with sequence "GAAL"
-```
-
-**Expected Output:**
-- Immediate structure prediction (30 sec - 2 min)
-- Confidence scores and metrics
-- CIF structure file
-
-### Example 3: Full Structure Prediction with Job Tracking
-
-**Goal:** Predict structure for larger protein with progress monitoring
-
-**Using Script:**
-```bash
-python scripts/predict_basic_structure.py \
-  --input examples/data/sample.fasta \
-  --output results/full_prediction/
-```
-
-**Using MCP (in Claude Code):**
-```
-Submit basic structure prediction for examples/data/sample.fasta
-
-Then check job status periodically:
-Use get_job_status with job_id "returned_job_id"
-Use get_job_log with job_id "returned_job_id"
-
-When completed:
-Use get_job_result with job_id "returned_job_id"
-```
-
-### Example 4: MSA-Enhanced Prediction
-
-**Goal:** Use evolutionary information for improved accuracy
-
-**Using Script:**
-```bash
-python scripts/predict_with_msas.py \
-  --input examples/data/sample.fasta \
-  --use-msa-server \
-  --output results/msa_enhanced/
-```
-
-**Using MCP (in Claude Code):**
-```
-Use submit_msa_prediction with:
-- input_file "examples/data/sample.fasta"
-- use_msa_server True
-- output_dir "results/msa_enhanced"
-```
-
-### Example 5: Batch Processing
-
-**Goal:** Process multiple files in parallel
-
-**Using Script:**
-```bash
-python scripts/predict_batch_structures.py \
-  --input-dir examples/data/batch_test \
-  --output-dir results/batch \
-  --parallel \
-  --max-workers 2
-```
-
-**Using MCP (in Claude Code):**
-```
-Use submit_batch_prediction with:
-- input_dir "examples/data/batch_test"
-- output_dir "results/batch"
-- parallel True
-- max_workers 2
-```
-
----
-
-## Demo Data
-
-The `examples/data/` directory contains sample data for testing:
-
-| File | Description | Use With |
-|------|-------------|----------|
-| `simple_test.fasta` | 4 AA peptide for quick testing | `predict_small_peptide` |
-| `sample.fasta` | Multi-protein complex example | `submit_basic_prediction` |
-| `1ac5.fasta` | Protein with glycan modifications | MSA prediction tools |
-| `8cyo.fasta` | Protein-ligand complex | Any prediction tool |
-| `protein_ligand.fasta` | Antibody with small molecule | Any prediction tool |
-| `*.aligned.pqt` | Pre-computed MSA files | `submit_msa_prediction` |
-| `batch_test/` | Multiple FASTA files | `submit_batch_prediction` |
-
----
-
-## Configuration Files
-
-The `configs/` directory contains configuration templates:
-
-| Config | Description | Key Parameters |
-|--------|-------------|----------------|
-| `default_config.json` | Base settings for all predictions | model params, device, validation |
-| `basic_prediction_config.json` | Basic prediction settings | recycles=3, timesteps=200 |
-| `msa_prediction_config.json` | MSA prediction settings | MSA server options |
-| `batch_prediction_config.json` | Batch processing settings | parallel options, worker limits |
-
-### Config Example
-
-```json
-{
-  "model": {
-    "num_trunk_recycles": 3,
-    "num_diffn_timesteps": 200,
-    "seed": 42
-  },
-  "computation": {
-    "device": "cuda:0",
-    "fallback_device": "cpu"
-  },
-  "output": {
-    "format": "cif",
-    "include_scores": true
-  }
-}
+I want high-accuracy structure prediction for my protein at /path/to/protein.fasta. Can you use submit_msa_prediction with use_msa_server set to True to include evolutionary information? Save results to /path/to/msa_results/.
 ```
 
 ---
 
 ## Troubleshooting
 
-### Environment Issues
-
-**Problem:** Environment not found
+**Docker not found?**
 ```bash
-# Recreate environment
-mamba create -p ./env python=3.10 -y
-mamba activate ./env
-pip install chai_lab==0.6.1 fastmcp loguru
+docker --version  # Install Docker if missing
 ```
 
-**Problem:** Import errors
+**GPU not accessible?**
+- Ensure NVIDIA Docker runtime is installed
+- Check with `docker run --gpus all ubuntu nvidia-smi`
+
+**Claude Code not found?**
 ```bash
-# Verify installation
-python -c "import chai_lab; print('chai_lab available')"
-python -c "from src.server import mcp; print('MCP server available')"
+# Install Claude Code
+npm install -g @anthropic-ai/claude-code
 ```
-
-### MCP Issues
-
-**Problem:** Server not found in Claude Code
-```bash
-# Check MCP registration
-claude mcp list
-
-# Re-add if needed
-claude mcp remove chai-lab
-claude mcp add chai-lab -- $(pwd)/env/bin/python $(pwd)/src/server.py
-```
-
-**Problem:** Tools not working
-```bash
-# Test server directly
-mamba run -p ./env python -c "
-import sys; sys.path.insert(0, 'src')
-from server import mcp
-print('Server name:', mcp.name)
-"
-```
-
-### Job Issues
-
-**Problem:** Job stuck in pending
-```bash
-# Check job directory
-ls -la jobs/
-
-# View job log
-cat jobs/<job_id>/job.log
-```
-
-**Problem:** Job failed
-```
-Use get_job_log with job_id "<job_id>" and tail 100 to see error details
-```
-
-**Problem:** Out of GPU memory
-```bash
-# Reduce model parameters in config
-{
-  "num_trunk_recycles": 1,
-  "num_diffn_timesteps": 50
-}
-```
-
-### File Access Issues
-
-**Problem:** File not found errors
-```bash
-# Use absolute paths
-ls -la examples/data/sample.fasta
-
-# Check permissions
-chmod 644 examples/data/*.fasta
-```
-
-**Problem:** Output directory creation fails
-```bash
-# Create directory manually
-mkdir -p results/test_output
-
-# Check write permissions
-touch results/test_output/test_file
-```
-
----
-
-## Performance Guidelines
-
-### Tool Selection Guide
-
-| Sequence Length | Recommended Tool | Expected Runtime |
-|----------------|------------------|------------------|
-| ≤ 20 AA | `predict_small_peptide` | 30 sec - 2 min |
-| 21-100 AA | `submit_basic_prediction` | 3-10 min |
-| 101-500 AA | `submit_basic_prediction` | 10-30 min |
-| > 500 AA | `submit_msa_prediction` | 30+ min |
-| Multiple files | `submit_batch_prediction` | Hours |
-
-### Resource Usage
-
-- **GPU Memory**: ~4-8GB for typical proteins
-- **CPU Memory**: ~8-16GB during processing
-- **Disk Space**: ~1-5MB per prediction output
-- **Network**: Required for MSA server access
-
-### Optimization Tips
-
-1. **Validation First**: Always use `validate_fasta_file` before submission
-2. **Sequence Analysis**: Use `analyze_sequence_composition` to assess complexity
-3. **Batch Processing**: Use `submit_batch_prediction` for multiple files
-4. **Parallel Processing**: Enable parallel=True for batch jobs with multiple GPUs
-5. **Resource Management**: Monitor jobs with `get_job_status` and `get_job_log`
-
----
-
-## Development
-
-### Running Tests
-
-```bash
-# Activate environment
-mamba activate ./env
-
-# Test server startup
-fastmcp dev src/server.py
-
-# Test script functionality
-python scripts/predict_basic_structure.py --help
-```
-
-### Starting Dev Server
-
-```bash
-# Run MCP server in dev mode
-fastmcp dev src/server.py
-```
-
----
-
-## Docker
-
-### Image Details
-
-The Docker image is based on `pytorch/pytorch:2.4.0-cuda11.8-cudnn9-runtime` and includes:
-- Python 3.11 with PyTorch 2.4.0 + CUDA 11.8
-- chai_lab 0.6.1
-- fastmcp 3.0
-- All required dependencies
-
-### Building Locally
-
-```bash
-docker build -t chai1_mcp .
-```
-
-### CI/CD
-
-A GitHub Actions workflow (`.github/workflows/docker.yml`) automatically builds and pushes the image to GHCR on:
-- Every push to `main`
-- Semantic version tags (`v*.*.*`)
-- Manual workflow dispatch
-
-Image tags:
-- `latest` — latest build from `main`
-- `sha-<commit>` — pinned to a specific commit
-- `x.y.z` — semantic version (when tagged)
 
 ---
 
 ## License
 
-Based on [chai-lab](https://github.com/chaidiscovery/chai-lab) by Chai Discovery.
-
-## Credits
-
-Based on [Chai Discovery's chai-lab repository](https://github.com/chaidiscovery/chai-lab)
+Based on [chai-lab](https://github.com/chaidiscovery/chai-lab) by Chai Discovery
