@@ -1,0 +1,37 @@
+{
+  "global_params": {
+    "num_trunk_recycles": 3,
+    "num_diffn_timesteps": 200,
+    "device": "cuda:0",
+    "use_esm_embeddings": true,
+    "use_msa_server": false,
+    "use_templates_server": false
+  },
+  "sequences": [
+    {
+      "id": "protein_1",
+      "description": "Small test protein",
+      "fasta_content": ">protein|name=test-protein-1\nAIQRTPKIQVYSRHPAENGKSNFLNCYVSGFHPSDIEVDLLKNGERIEKVEHSDLSFSKDWSFYLLYYTEFTPTEKDEYACRVNHVTLSQPKIVKWDRDM",
+      "params": {
+        "seed": 42
+      }
+    },
+    {
+      "id": "protein_2",
+      "description": "Peptide with ligand",
+      "fasta_content": ">protein|name=test-peptide\nGAAL\n>ligand|name=test-ligand\nCCCCCCCCCCCCCC(=O)O",
+      "params": {
+        "seed": 123
+      }
+    },
+    {
+      "id": "complex_1",
+      "description": "Protein-protein complex",
+      "fasta_content": ">protein|name=protein-a\nMKLLVLSLSLLVLVLAAVVAQGKVFERCELARTLKRLGMDGYRGISLANWMCLAKWESGYNTRATNYNAGDRSTDYGIFQINSRYWCNDGKTPGAVNACHLSCSALLQDNIADAVACAKRVVRDPQGIRAWVAWRNRCQNRDVRQYVQGCGV\n>protein|name=protein-b\nGGKKVVYRRGAHTKDVVYIIKELPPVLFIDGKELGPGISRIIIKEHSLSDESILQSGGILLLNEDTGEFSGYISRSSVPLEEEEQKLLLNLDSMDTVLQFLKHHTGKKWDLV",
+      "params": {
+        "seed": 456,
+        "use_msa_server": true
+      }
+    }
+  ]
+}

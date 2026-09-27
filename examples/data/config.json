@@ -1,0 +1,22 @@
+{
+  "fasta_content": ">protein|name=antibody-heavy-chain\nEVQLVESGGGLIQPGGSLRLSCAASEFIVSRNYMSWVRQAPGTGLEWVSVIYPGGSTFYADSVKGRFTISRDNSKNTLYLQMDSLRVEDTAVYYCARDYGDFYFDYWGQGTLVTVSSASTKGPSVFPLAPSSKSTSGGTAALGCLVKDYFPEPVTVSWNSGALTSGVHTFPAVLQSSGLYSLSSVVTVPSSSLGTQTYICNVNHKPSNTKVDKKVEPKSCDK\n>protein|name=antibody-light-chain\nEIVMTQSPVSLSVSPGERATLSCRASQGVASNLAWYQQKAGQAPRLLIYGASTRATGIPARFSGSGSGTEFTLTISTLQSEDSAVYYCQQYNDRPRTFGQGTKLEIKRT",
+  "prediction_params": {
+    "num_trunk_recycles": 3,
+    "num_diffn_timesteps": 200,
+    "seed": 1234,
+    "device": "cuda:0",
+    "use_esm_embeddings": true
+  },
+  "msa_params": {
+    "use_msa_server": true,
+    "msa_directory": null
+  },
+  "template_params": {
+    "use_templates_server": true,
+    "template_directory": null
+  },
+  "output_params": {
+    "num_samples": 5,
+    "save_intermediate": false
+  }
+}
